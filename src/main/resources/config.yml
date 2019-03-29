@@ -1,0 +1,17 @@
+# You should have a world for each map that is prefixed with 'bunkers_map_' AND contains a 'map-data.yml' file
+# Example world name: 'bunkers_map_classic'
+maps:
+  - classic
+game-settings:
+  # CAPTURE, POINTS
+  win-condition: "CAPTURE"
+database:
+  mongo:
+    host: "127.0.0.1"
+    port: 27017
+    database: "bunkers"
+    authentication:
+      enabled: false
+      username: "admin"
+      password: "dev"
+      database: "admin"

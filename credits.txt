@@ -1,0 +1,3 @@
+Credits:
+ * ckamps (@ckamps2020) - Using 'UpdateHandler' from TSMCNetworkTools
+ * TheKawaiiSam (@ThatKawaiiSad) - Using his 'Assemble' scoreboard library
