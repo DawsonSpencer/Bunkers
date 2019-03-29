@@ -1,4 +1,5 @@
 # Bunkers #
+> NOTE: This plugin is not yet functional and is not recommended for use on a production server.
 <p>This is a high-performance, open-source remake of FrozenOrb's popular game-mode 
 of the same name. This plugin is currently not in use on any networks and as 
 such updates and bug fixes may be far and few between. Reporting issues and making
