@@ -2,3 +2,4 @@ name: Bunkers
 main: me.skeltal.bunkers.Bunkers
 version: 1.0-SNAPSHOT
 authors: [ Skeltal ]
+load: STARTUP

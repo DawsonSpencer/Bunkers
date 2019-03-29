@@ -1,7 +1,8 @@
 # You should have a world for each map that is prefixed with 'bunkers_map_' AND contains a 'map-data.yml' file
-# Example world name: 'bunkers_map_classic'
+# Example world name: 'bunkers_map_Classic'
 maps:
-  - classic
+  - Classic
+  - Winter
 game-settings:
   # CAPTURE, POINTS
   win-condition: "CAPTURE"
