@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Getter
 public enum Team {
-
     RED("&c", "Red", new ItemMaker(Material.WOOL).setData(14).setTitle("&c&lRed Team").setLore("&7Right-Click to join this team.").build()),
     BLUE("&9", "Blue", new ItemMaker(Material.WOOL).setData(3).setTitle("&9&lBlue Team").setLore("&7Right-Click to join this team.").build()),
     GREEN("&a", "Green", new ItemMaker(Material.WOOL).setData(5).setTitle("&a&lGreen Team").setLore("&7Right-Click to join this team.").build()),
@@ -29,5 +28,4 @@ public enum Team {
 
         this.members = new HashSet<>();
     }
-
 }

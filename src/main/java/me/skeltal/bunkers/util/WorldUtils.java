@@ -1,4 +1,4 @@
-package me.skeltal.bunkers.game.map;
+package me.skeltal.bunkers.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

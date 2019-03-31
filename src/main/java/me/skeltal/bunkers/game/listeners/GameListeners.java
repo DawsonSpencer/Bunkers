@@ -4,35 +4,35 @@ import me.skeltal.bunkers.Bunkers;
 import me.skeltal.bunkers.api.event.update.UpdateEvent;
 import me.skeltal.bunkers.api.event.update.UpdateType;
 import me.skeltal.bunkers.game.Game;
-import me.skeltal.bunkers.game.map.GameMap;
-import me.skeltal.bunkers.game.struct.Stage;
+import me.skeltal.bunkers.game.struct.GameMap;
+import me.skeltal.bunkers.game.struct.GameStage;
 import me.skeltal.bunkers.game.struct.Team;
+import me.skeltal.bunkers.profile.GameProfile;
+import me.skeltal.bunkers.timer.TimerManager;
+import me.skeltal.bunkers.timer.type.ServerTimer;
 import me.skeltal.bunkers.util.CC;
-import me.skeltal.bunkers.util.ItemMaker;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Sound;
-import org.bukkit.block.Block;
-import org.bukkit.entity.EnderDragon;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Wither;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.event.weather.WeatherChangeEvent;
 
 public class GameListeners implements Listener {
 
     @EventHandler
     public void onUpdate(UpdateEvent event) {
+        TimerManager timerManager = Bunkers.getInstance().getTimerManager();
         UpdateType type = event.getType();
         Game game = Bunkers.getInstance().getGame();
 
         if (game != null) {
-            switch (game.getStage()) {
+            switch (game.getGameStage()) {
                 case WAITING: {
                     if (type == UpdateType.TWO_TICK) {
                         if (Bukkit.getServer().getOnlinePlayers().size() >= 4) {
@@ -60,31 +60,27 @@ public class GameListeners implements Listener {
                 }
                 case COUNTDOWN: {
                     if (type == UpdateType.SEC) {
-                        if (Bukkit.getOnlinePlayers().size() >= 4) {
-                            if (game.getCountdown() - 1 == 0) {
-                                // Starting the game
-                                game.start();
-                            } else {
-                                // Counting down
-                                game.setCountdown(game.getCountdown() - 1);
+                        if (timerManager.hasTimer(ServerTimer.ServerTimerType.COUNTDOWN)) {
+                            ServerTimer timer = timerManager.getTimer(ServerTimer.ServerTimerType.COUNTDOWN);
+                            if (Bukkit.getOnlinePlayers().size() < 4) {
+                                timerManager.removeTimer(ServerTimer.ServerTimerType.COUNTDOWN);
 
-                                if (game.getCountdown() <= 5) {
-                                    Bukkit.broadcastMessage(CC.translate("&eGame starting in &6" + game.getCountdown() + " &eseconds!"));
-                                    for (Player player : Bukkit.getOnlinePlayers()) {
-                                        player.playSound(player.getLocation(), Sound.NOTE_PLING, 1.0f, 1.0f);
-                                    }
+                                game.setGameStage(GameStage.WAITING);
+                                Bukkit.broadcastMessage(CC.translate("&cNot enough players to start the game!"));
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.getInventory().setItem(1, Team.RED.getItemStack());
+                                    player.getInventory().setItem(3, Team.BLUE.getItemStack());
+                                    player.getInventory().setItem(5, Team.GREEN.getItemStack());
+                                    player.getInventory().setItem(7, Team.YELLOW.getItemStack());
+
+                                    player.playSound(player.getLocation(), Sound.CAT_MEOW, 1.0f, 1.0f);
                                 }
+                                return;
                             }
-                        } else {
-                            game.setStage(Stage.WAITING);
-                            Bukkit.broadcastMessage(CC.translate("&cNot enough players to start the game!"));
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                player.getInventory().setItem(1, Team.RED.getItemStack());
-                                player.getInventory().setItem(3, Team.BLUE.getItemStack());
-                                player.getInventory().setItem(5, Team.GREEN.getItemStack());
-                                player.getInventory().setItem(7, Team.YELLOW.getItemStack());
 
-                                player.playSound(player.getLocation(), Sound.CAT_MEOW, 1.0f, 1.0f);
+                            Bukkit.broadcastMessage(CC.translate("&eGame starting in &6" + timer.getTimeLeft() + "&e!"));
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                player.playSound(player.getLocation(), Sound.NOTE_PLING, 1.0f, 1.0f);
                             }
                         }
                     }
@@ -94,7 +90,7 @@ public class GameListeners implements Listener {
                     if (type == UpdateType.SEC) {
                         Bukkit.broadcastMessage(CC.translate("&6&lGame Over!"));
                         if (game.getWinners() != null) {
-                            Bukkit.broadcastMessage(CC.translate("&6Wiiners: " + game.getWinners().getDisplayName()));
+                            Bukkit.broadcastMessage(CC.translate("&6Winners: " + game.getWinners().getDisplayName()));
                         }
                     }
                     break;
@@ -108,77 +104,85 @@ public class GameListeners implements Listener {
         Player player = event.getPlayer();
         Game game = Bunkers.getInstance().getGame();
 
-        event.setCancelled(true);
-
-        if (game.getStage() == Stage.PLAYING) {
-            Block block = event.getBlock();
-
-            if (block.getType().name().contains("ORE")) {
-                player.getInventory().addItem(new ItemMaker(block.getType()).build());
-
-                // set to cobble then runTaskAsyncLater and re-set as the ore
+        if (game.getGameStage() == GameStage.PLAYING) {
+            // todo
+        } else {
+            if (player.getGameMode() != GameMode.CREATIVE) {
+                event.setCancelled(true);
             }
         }
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
         Game game = Bunkers.getInstance().getGame();
 
-        if (game.getStage() == Stage.PLAYING) {
+        if (game.getGameStage() == GameStage.PLAYING) {
             // restrict placement (claims, spawn etc.)
         } else {
-            event.setCancelled(true);
+            if (player.getGameMode() != GameMode.CREATIVE) {
+                event.setCancelled(true);
+            }
         }
     }
 
     @EventHandler
-    public void onServerListPing(ServerListPingEvent event) {
-        Game game = Bunkers.getInstance().getGame();
-        String prefix = "&6&lBunkers &7" + CC.UNICODE_VERTICAL_BAR + "&f ";
-
-        if (game == null) {
-            event.setMotd(CC.translate(prefix + "No Game Running!"));
+    public void onDamage(EntityDamageEvent event) {
+        if (Bunkers.getInstance().getGame().getGameStage() != GameStage.PLAYING) {
+            event.setCancelled(true);
         } else {
-            switch (game.getStage()) {
-                case WAITING: {
-                    event.setMotd(CC.translate(prefix + "Need more players! &7(" + Bukkit.getOnlinePlayers().size() + "/4)\n&6Game Stage: &e" + game.getStage().getDisplay()));
-                    break;
-                }
-                case COUNTDOWN: {
-                    event.setMotd(CC.translate(prefix + "Starting in " + game.getCountdown() + " seconds...\n&6Game Stage: &e" + game.getStage().getDisplay()));
-                    break;
-                }
-                case PLAYING: {
-                    event.setMotd(CC.translate(prefix + "Game in progress...\n&6Game Stage: &e" + game.getStage().getDisplay()));
-                    break;
-                }
-                case ENDING: {
-                    event.setMotd(CC.translate(prefix + "Game over!" + (game.getWinners() == null ? "" : "Winners: " + game.getWinners().getDisplayName()) + "\n&6Game Stage: &e" + game.getStage().getDisplay()));
-                    break;
+            if (event instanceof EntityDamageByEntityEvent) {
+                if (((EntityDamageByEntityEvent) event).getDamager() instanceof Player && event.getEntity() instanceof Player) {
+                    GameProfile damagedProfile = GameProfile.getByUuid(event.getEntity().getUniqueId());
+                    GameProfile damagerProfile = GameProfile.getByUuid(((EntityDamageByEntityEvent) event).getDamager().getUniqueId());
+
+                    if (damagedProfile.getTeam() == damagerProfile.getTeam()) {
+                        event.setCancelled(true);
+                    }
                 }
             }
         }
     }
 
     @EventHandler
-    public void onEntityExplode(EntityExplodeEvent event) {
-        event.blockList().clear();
-        if (event.getEntity() instanceof EnderDragon) {
-            event.setCancelled(true);
-        }
-    }
+    public void onServerListPing(ServerListPingEvent event) {
+        if (!Bunkers.getInstance().getRootConfig().getConfiguration().getBoolean("settings.use-dynamic-motd")) return;
+        Game game = Bunkers.getInstance().getGame();
+        String prefix = "&6&lBunkers &7" + CC.UNICODE_VERTICAL_BAR + "&f ";
 
-    @EventHandler(ignoreCancelled = true)
-    public void onBedEnter(PlayerBedEnterEvent event) {
-        event.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onEntityChangeBlock(EntityChangeBlockEvent event) {
-        Entity entity = event.getEntity();
-        if (entity instanceof Wither || entity instanceof EnderDragon) {
-            event.setCancelled(true);
+        if (game == null) {
+            event.setMotd(CC.translate(prefix + "No Game Running!"));
+        } else {
+            switch (game.getGameStage()) {
+                case WAITING: {
+                    event.setMotd(CC.translate(
+                            prefix + "Need more players! &7(" + Bukkit.getOnlinePlayers().size() + "/4)\n" +
+                                    "&6Game GameStage: &e" + game.getGameStage().getDisplay())
+                    );
+                    break;
+                }
+                case COUNTDOWN: {
+                    event.setMotd(CC.translate(
+                            prefix + "Starting in " + /*game.getCountdown() +*/ " seconds..." +
+                                    "\n&6Game GameStage: &e" + game.getGameStage().getDisplay())
+                    );
+                    break;
+                }
+                case PLAYING: {
+                    event.setMotd(CC.translate(
+                            prefix + "Game in progress..." +
+                                    "\n&6Game GameStage: &e" + game.getGameStage().getDisplay())
+                    );
+                    break;
+                }
+                case ENDING: {
+                    event.setMotd(CC.translate(
+                            prefix + "Game over!" + (game.getWinners() == null ? "" : "Winners: " + game.getWinners().getDisplayName()) +
+                                    "\n&6Game GameStage: &e" + game.getGameStage().getDisplay()));
+                    break;
+                }
+            }
         }
     }
 
@@ -197,6 +201,13 @@ public class GameListeners implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onBlockIgnite(BlockIgniteEvent event) {
         if (event.getCause() == BlockIgniteEvent.IgniteCause.SPREAD) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onWeather(WeatherChangeEvent event) {
+        if (event.toWeatherState()) {
             event.setCancelled(true);
         }
     }

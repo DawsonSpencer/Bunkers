@@ -15,7 +15,7 @@ public class GameInfoCommand {
 
         sender.sendMessage(CC.translate("&6&nGame Info"));
         sender.sendMessage(CC.translate("&6Duration: "));
-        sender.sendMessage(CC.translate("&6Stage: " + game.getStage().getDisplay()));
+        sender.sendMessage(CC.translate("&6Stage: " + game.getGameStage().getDisplay()));
         //sender.sendMessage(CC.translate("&6Spectators: " + game.getSpectators().size()));
         sender.sendMessage(CC.translate("&6Teams: "));
         for (Team team : Team.values()) {

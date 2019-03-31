@@ -1,12 +1,14 @@
-package me.skeltal.bunkers.game.map;
+package me.skeltal.bunkers.game.struct;
 
 import lombok.Getter;
 import lombok.Setter;
 import me.skeltal.bunkers.Bunkers;
-import me.skeltal.bunkers.game.struct.Team;
+import me.skeltal.bunkers.util.Logger;
+import me.skeltal.bunkers.util.WorldUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 
 import java.io.File;
 import java.util.*;
@@ -20,7 +22,7 @@ public class GameMap {
 
     private String name;
     private World world;
-    @Setter private Set<UUID> votes = new HashSet<>();
+    private Set<UUID> votes = new HashSet<>();
     private Map<Team, Location> homes = new HashMap<>();
 
     public GameMap(String name, World world) {
@@ -28,6 +30,12 @@ public class GameMap {
         this.world = world;
     }
 
+    /**
+     * Retrieve an instance of the GameMap
+     *
+     * @param name name of the map you wish to retrieve an instance of
+     * @return an instance of the map
+     */
     public static GameMap getByName(String name) {
         for (GameMap map : maps) {
             if (map.getName().equalsIgnoreCase(name)) {
@@ -37,21 +45,26 @@ public class GameMap {
         return null;
     }
 
+    /**
+     * Pre-load all maps (world, attributes, etc.) defined in the plugin configuration
+     */
     public static void preLoadMaps() {
         for (String mapName : Bunkers.getInstance().getRootConfig().getConfiguration().getStringList("maps")) {
             File worldFolder = new File("./" + MAP_WORLD_PREFIX + mapName).getAbsoluteFile();
 
             if (!worldFolder.exists()) {
-                Bunkers.getInstance().getLogger().warning("Failed to load '" + mapName + "' map because it doesn't exist!");
+                Logger.warning("Failed to load '" + mapName + "' map because it doesn't exist!");
                 return;
             }
 
-            WorldUtils.registerWorld(MAP_WORLD_PREFIX + mapName);
+            if (!WorldUtils.isWorldLoaded(mapName)) {
+                WorldUtils.registerWorld(MAP_WORLD_PREFIX + mapName);
+            }
             World world = Bukkit.getWorld(mapName);
 
             File mapData = new File("./" + MAP_WORLD_PREFIX + mapName + "/map-data.yml").getAbsoluteFile();
             if (!mapData.exists()) {
-                Bunkers.getInstance().getLogger().warning("Failed to load '" + mapName + "' map because it doesn't have a map-data file!");
+                Logger.warning("Failed to load '" + mapName + "' map because it doesn't have a map-data file!");
                 return;
             }
 
@@ -60,7 +73,17 @@ public class GameMap {
 
             maps.add(gameMap);
 
-            Bunkers.getInstance().getLogger().info("Successfully loaded the '" + mapName + "' map.");
+            Logger.info("Successfully loaded the '" + mapName + "' map.");
+        }
+
+        for (World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                entity.remove();
+            }
+
+            world.setGameRuleValue("doMobSpawning", "false");
+            world.setGameRuleValue("doDayLightCycle", "false");
+            world.setTime(0);
         }
     }
 

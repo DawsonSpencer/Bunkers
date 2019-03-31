@@ -2,7 +2,7 @@ package me.skeltal.bunkers.game.listeners;
 
 import me.skeltal.bunkers.Bunkers;
 import me.skeltal.bunkers.game.Game;
-import me.skeltal.bunkers.game.struct.Stage;
+import me.skeltal.bunkers.game.struct.GameStage;
 import me.skeltal.bunkers.game.struct.Team;
 import me.skeltal.bunkers.profile.GameProfile;
 import me.skeltal.bunkers.util.CC;
@@ -17,10 +17,12 @@ public class PlayerListeners implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
+
         Player player = event.getPlayer();
         Game game = Bunkers.getInstance().getGame();
 
-        switch (game.getStage()) {
+        switch (game.getGameStage()) {
             case WAITING: {
                 player.teleport(player.getWorld().getSpawnLocation());
 
@@ -42,9 +44,9 @@ public class PlayerListeners implements Listener {
         GameProfile gameProfile = GameProfile.getByUuid(player.getUniqueId());
         Game game = Bunkers.getInstance().getGame();
 
-        if (game.getStage() == Stage.WAITING) {
-            if (event.getAction().name().contains("RIGHT")) {
-                for (Team team : Team.values()) {
+        if (game.getGameStage() == GameStage.WAITING) {
+            if (event.getItem() != null && event.getAction().name().contains("RIGHT")) {
+                for (Team team : Team.values()) { // todo optimize?
                     if (event.getItem().isSimilar(team.getItemStack())) {
                         if (gameProfile.getTeam() != null && gameProfile.getTeam() == team) {
                             player.sendMessage(CC.RED + "You are already on this team.");

@@ -17,6 +17,7 @@ Once these tasks have been taken care of, compilation via `mvn clean install` wi
 * [ckamps2020](https://github.com/ckamps2020) - Using 'UpdateHandler' from TSMCNetworkTools
 * [ThatKawaiiSam](https://github.com/ThatKawaiiSam) - Using his 'Assemble' scoreboard library (Fork of [Frame](https://github.com/joeleoli/Frame))
 * [BizarreAlex](https://github.com/Bizarre) - Using the [honcho bukkit command framework](https://github.com/bizarre/honcho)
+* [TewPingz](https://github.com/TewPingz) - Timers
 
 ## License ##
 This software is available under the following licenses:

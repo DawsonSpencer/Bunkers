@@ -1,6 +1,8 @@
 package me.skeltal.bunkers.game.listeners;
 
 import me.skeltal.bunkers.Bunkers;
+import me.skeltal.bunkers.game.Game;
+import me.skeltal.bunkers.game.struct.GameStage;
 import me.skeltal.bunkers.profile.GameProfile;
 import me.skeltal.bunkers.util.CC;
 import org.bukkit.Bukkit;
@@ -16,6 +18,13 @@ public class ProfileListeners implements Listener {
 
     @EventHandler
     public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+        Game game = Bunkers.getInstance().getGame();
+
+        if (game != null && game.getGameStage() != GameStage.WAITING) { // todo spectators
+            event.setKickMessage(CC.RED + "There is already a game in progress.");
+            event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+        }
+
         Player player = Bukkit.getServer().getPlayer(event.getUniqueId());
 
         if (player != null && player.isOnline()) {
@@ -48,6 +57,8 @@ public class ProfileListeners implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        event.setQuitMessage(null);
+
         Player player = event.getPlayer();
         GameProfile gameProfile = GameProfile.getProfiles().remove(player.getUniqueId());
 

@@ -2,9 +2,11 @@ package me.skeltal.bunkers.board;
 
 import me.skeltal.bunkers.Bunkers;
 import me.skeltal.bunkers.game.Game;
-import me.skeltal.bunkers.game.map.GameMap;
+import me.skeltal.bunkers.game.struct.GameMap;
 import me.skeltal.bunkers.game.struct.Team;
 import me.skeltal.bunkers.profile.GameProfile;
+import me.skeltal.bunkers.timer.TimerManager;
+import me.skeltal.bunkers.timer.type.ServerTimer;
 import me.skeltal.bunkers.util.scoreboard.BoardAdapter;
 import me.skeltal.bunkers.util.CC;
 import org.bukkit.entity.Player;
@@ -24,8 +26,9 @@ public class BunkersAdapter implements BoardAdapter {
         List<String> display = new ArrayList<>();
         GameProfile gameProfile = GameProfile.getByUuid(player.getUniqueId());
         Game game = Bunkers.getInstance().getGame();
+        TimerManager timerManager = Bunkers.getInstance().getTimerManager();
 
-        switch (game.getStage()) {
+        switch (game.getGameStage()) {
             case WAITING: {
                 if (gameProfile.getTeam() != null) {
                     display.add("&d&lTeam&r: " + gameProfile.getTeam().getDisplayName());
@@ -47,12 +50,16 @@ public class BunkersAdapter implements BoardAdapter {
                 break;
             }
             case COUNTDOWN: {
-                display.add("&d&lTeam&r: ");
+                display.add("&d&lTeam&r: " + gameProfile.getTeam().getDisplayName());
                 break;
             }
             case PLAYING: {
-                display.add("&d&lTeam&r: ");
+                display.add("&d&lTeam&r: " + gameProfile.getTeam().getDisplayName());
                 display.add("&9&lBalance&r: &c$");
+                break;
+            }
+            case ENDING: {
+                display.add("&6&lWinners: &r" + (game.getWinners() == null ? "None" : game.getWinners().getDisplayName()));
                 break;
             }
         }

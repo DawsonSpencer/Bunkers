@@ -3,9 +3,10 @@
 maps:
   - Classic
   - Winter
-game-settings:
+settings:
   # CAPTURE, POINTS
   win-condition: "CAPTURE"
+  use-dynamic-motd: true
 database:
   mongo:
     host: "127.0.0.1"

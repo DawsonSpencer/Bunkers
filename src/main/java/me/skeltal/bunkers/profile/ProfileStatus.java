@@ -1,18 +1,18 @@
-package me.skeltal.bunkers.game.struct;
+package me.skeltal.bunkers.profile;
 
 import lombok.Getter;
 
 @Getter
-public enum Stage {
+public enum ProfileStatus {
 
     WAITING("Waiting"),
-    COUNTDOWN("Countdown"),
     PLAYING("Playing"),
-    ENDING("Ending");
+    //SPECTATING("Spectating"),
+    ;
 
     private String display;
 
-    Stage(String display) {
+    ProfileStatus(String display) {
         this.display = display;
     }
 
